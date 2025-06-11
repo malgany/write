@@ -37,4 +37,6 @@ async function handleClick() {
     console.error(err);
     alert('Failed to fetch suggestion');
   }
+}
+
 document.getElementById('runButton').addEventListener('click', handleClick);
