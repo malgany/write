@@ -2,6 +2,52 @@
 
 (function () {
   let menu = null;
+  const editor = document.getElementById('editor');
+
+  function getVersions() {
+    try {
+      return JSON.parse(localStorage.getItem('versions')) || [];
+    } catch (e) {
+      return [];
+    }
+  }
+
+  function storeVersions(versions) {
+    localStorage.setItem('versions', JSON.stringify(versions));
+  }
+
+  function updateVersionList() {
+    const versions = getVersions();
+    const ul = document.getElementById('versions-list');
+    if (!ul) return;
+    ul.innerHTML = '';
+    versions.forEach(text => {
+      const li = document.createElement('li');
+      li.textContent = text;
+      ul.appendChild(li);
+    });
+  }
+
+  function saveVersion() {
+    const text = editor.innerText;
+    const versions = getVersions();
+    if (versions.length === 0 || versions[versions.length - 1] !== text) {
+      versions.push(text);
+      storeVersions(versions);
+      updateVersionList();
+    }
+  }
+
+  function setupVersionTracking() {
+    updateVersionList();
+    let timer;
+    editor.addEventListener('input', () => {
+      clearTimeout(timer);
+      timer = setTimeout(saveVersion, 300);
+    });
+  }
+
+  document.addEventListener('DOMContentLoaded', setupVersionTracking);
 
   function getApiKey() {
     let key = sessionStorage.getItem('geminiApiKey');
@@ -84,6 +130,7 @@
           if (suggestion) {
             range.deleteContents();
             range.insertNode(document.createTextNode(suggestion));
+            saveVersion();
           }
         } catch (err) {
           alert(err.message);
