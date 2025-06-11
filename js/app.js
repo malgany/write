@@ -3,6 +3,43 @@
 (function () {
   let menu = null;
 
+  function getApiKey() {
+    let key = sessionStorage.getItem('geminiApiKey');
+    if (!key) {
+      key = window.prompt('Insira sua chave da API Gemini:');
+      if (key) {
+        sessionStorage.setItem('geminiApiKey', key);
+      }
+    }
+    return key;
+  }
+
+  async function sendToGemini(prompt) {
+    const apiKey = getApiKey();
+    if (!apiKey) {
+      throw new Error('Gemini API key não fornecida.');
+    }
+
+    const url =
+      'https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key=' +
+      encodeURIComponent(apiKey);
+    const response = await fetch(url, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        contents: [{ role: 'user', parts: [{ text: prompt }] }]
+      })
+    });
+    const data = await response.json();
+    if (data.candidates && data.candidates.length > 0) {
+      const part = data.candidates[0].content.parts[0];
+      return part.text || data.candidates[0].output || '';
+    }
+    throw new Error('Resposta inesperada da API');
+  }
+
   function removeMenu() {
     if (menu) {
       menu.remove();
@@ -27,6 +64,11 @@
       'Melhore a fluidez',
       'Tornar o texto mais formal'
     ];
+    const prompts = {
+      'Ajuste ortográfico': 'Corrija a ortografia do texto a seguir:',
+      'Melhore a fluidez': 'Melhore a fluidez do texto a seguir:',
+      'Tornar o texto mais formal': 'Torne o texto a seguir mais formal:'
+    };
 
     options.forEach(label => {
       const btn = document.createElement('button');
@@ -34,12 +76,17 @@
       btn.textContent = label;
       btn.style.display = 'block';
       btn.style.margin = '2px 0';
-      btn.addEventListener('click', () => {
+      btn.addEventListener('click', async () => {
         const currentText = range.toString();
-        const newText = window.prompt(label + ':', currentText);
-        if (newText !== null) {
-          range.deleteContents();
-          range.insertNode(document.createTextNode(newText));
+        const prompt = `${prompts[label]}\n\n"${currentText}"`;
+        try {
+          const suggestion = await sendToGemini(prompt);
+          if (suggestion) {
+            range.deleteContents();
+            range.insertNode(document.createTextNode(suggestion));
+          }
+        } catch (err) {
+          alert(err.message);
         }
         removeMenu();
       });
