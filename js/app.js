@@ -2,6 +2,7 @@
 
 (function () {
   let menu = null;
+  let actionBtn = null;
   const editor = document.getElementById('editor');
 
   function getVersions() {
@@ -36,6 +37,9 @@
     const versions = getVersions();
     if (versions.length === 0 || versions[versions.length - 1] !== text) {
       versions.push(text);
+      if (versions.length > 10) {
+        versions.shift();
+      }
       storeVersions(versions);
       updateVersionList();
     }
@@ -46,8 +50,16 @@
     let timer;
     editor.addEventListener('input', () => {
       clearTimeout(timer);
-      timer = setTimeout(saveVersion, 300);
+      timer = setTimeout(saveVersion, 2000);
     });
+
+    const clearBtn = document.getElementById('clear-history');
+    if (clearBtn) {
+      clearBtn.addEventListener('click', () => {
+        storeVersions([]);
+        updateVersionList();
+      });
+    }
   }
 
   document.addEventListener('DOMContentLoaded', setupVersionTracking);
@@ -94,6 +106,28 @@
       menu.remove();
       menu = null;
     }
+  }
+
+  function removeActionBtn() {
+    if (actionBtn) {
+      actionBtn.remove();
+      actionBtn = null;
+    }
+  }
+
+  function showActionBtn(x, y, range) {
+    removeActionBtn();
+    actionBtn = document.createElement('button');
+    actionBtn.type = 'button';
+    actionBtn.textContent = '✎';
+    actionBtn.className = 'action-button';
+    actionBtn.style.left = x + 'px';
+    actionBtn.style.top = y + 'px';
+    actionBtn.addEventListener('click', (e) => {
+      const rect = actionBtn.getBoundingClientRect();
+      showMenu(rect.left, rect.bottom, range);
+    });
+    document.body.appendChild(actionBtn);
   }
 
   function showMenu(x, y, range) {
@@ -146,22 +180,30 @@
     document.body.appendChild(menu);
   }
 
-  document.addEventListener('mouseup', (e) => {
+  document.addEventListener('mouseup', () => {
     const selection = window.getSelection();
     if (selection && selection.toString().trim().length > 0) {
       const range = selection.getRangeAt(0).cloneRange();
       const rect = range.getBoundingClientRect();
-      const x = rect.left + window.pageXOffset;
-      const y = rect.bottom + window.pageYOffset;
-      showMenu(x, y, range);
+      const x = rect.right + window.pageXOffset;
+      const y = rect.top + window.pageYOffset - 30;
+      showActionBtn(x, y, range);
     } else {
+      removeActionBtn();
       removeMenu();
     }
   });
 
   document.addEventListener('click', (e) => {
-    if (menu && !menu.contains(e.target)) {
+    if (menu && !menu.contains(e.target) && actionBtn !== e.target) {
       removeMenu();
     }
+    if (actionBtn && !actionBtn.contains(e.target)) {
+      removeActionBtn();
+    }
+  });
+
+  editor.addEventListener('contextmenu', (e) => {
+    e.preventDefault();
   });
 })();
