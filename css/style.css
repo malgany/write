@@ -17,8 +17,27 @@ body {
     margin: 20px 0;
 }
 
+.editor:empty:before {
+    content: attr(data-placeholder);
+    color: #888;
+}
+
 #versions {
     width: 80%;
+}
+
+#clear-history {
+    margin-bottom: 10px;
+}
+
+.action-button {
+    position: absolute;
+    padding: 4px 6px;
+    background: #fff;
+    border: 1px solid #ccc;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.2);
+    cursor: pointer;
+    z-index: 1000;
 }
 
 /* Style the main text area for comfortable editing */
