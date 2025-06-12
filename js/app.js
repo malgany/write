@@ -211,4 +211,12 @@
   editor.addEventListener('contextmenu', (e) => {
     e.preventDefault();
   });
+
+  // Expose functions for testing
+  window.app = {
+    getVersions,
+    storeVersions,
+    saveVersion,
+    updateVersionList
+  };
 })();

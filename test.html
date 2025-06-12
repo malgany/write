@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>QUnit Tests</title>
+  <link rel="stylesheet" href="https://code.jquery.com/qunit/qunit-2.19.4.css">
+  <script src="https://code.jquery.com/qunit/qunit-2.19.4.js"></script>
+  <script src="js/app.js"></script>
+</head>
+<body>
+  <div id="qunit"></div>
+  <div id="qunit-fixture"></div>
+
+  <div id="editor" contenteditable="true"></div>
+  <ul id="versions-list"></ul>
+
+  <script>
+    QUnit.module('app.js functions', {
+      beforeEach: function() {
+        localStorage.clear();
+        document.getElementById('versions-list').innerHTML = '';
+        document.getElementById('editor').innerText = '';
+      }
+    });
+
+    QUnit.test('getVersions handles invalid data', function(assert) {
+      localStorage.setItem('versions', 'invalid');
+      assert.deepEqual(window.app.getVersions(), [], 'returns empty array for invalid JSON');
+    });
+
+    QUnit.test('saveVersion stores unique version and updates list', function(assert) {
+      var editor = document.getElementById('editor');
+      editor.innerText = 'Hello';
+      window.app.saveVersion();
+      assert.deepEqual(window.app.getVersions(), ['Hello'], 'version stored');
+      assert.equal(document.querySelectorAll('#versions-list li').length, 1, 'list updated');
+    });
+
+    QUnit.test('saveVersion ignores duplicates', function(assert) {
+      var editor = document.getElementById('editor');
+      editor.innerText = 'Same';
+      window.app.saveVersion();
+      editor.innerText = 'Same';
+      window.app.saveVersion();
+      assert.deepEqual(window.app.getVersions(), ['Same'], 'duplicate not added');
+    });
+
+    QUnit.test('saveVersion keeps only latest 10', function(assert) {
+      var editor = document.getElementById('editor');
+      for (var i = 1; i <= 11; i++) {
+        editor.innerText = 'v' + i;
+        window.app.saveVersion();
+      }
+      var versions = window.app.getVersions();
+      assert.equal(versions.length, 10, 'only 10 versions stored');
+      assert.equal(versions[0], 'v2', 'oldest version dropped');
+    });
+
+    QUnit.test('storeVersions persists array', function(assert) {
+      window.app.storeVersions(['a', 'b']);
+      assert.deepEqual(window.app.getVersions(), ['a', 'b'], 'versions persisted');
+    });
+
+    QUnit.test('updateVersionList renders list', function(assert) {
+      window.app.storeVersions(['x', 'y']);
+      window.app.updateVersionList();
+      var texts = Array.from(document.querySelectorAll('#versions-list li')).map(function(li){ return li.textContent; });
+      assert.deepEqual(texts, ['x', 'y'], 'DOM updated with versions');
+    });
+  </script>
+</body>
+</html>
