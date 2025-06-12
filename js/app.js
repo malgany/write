@@ -127,6 +127,11 @@
       const rect = actionBtn.getBoundingClientRect();
       showMenu(rect.left, rect.bottom, range);
     });
+    actionBtn.addEventListener('contextmenu', (e) => {
+      e.preventDefault();
+      const rect = actionBtn.getBoundingClientRect();
+      showMenu(rect.left, rect.bottom, range);
+    });
     document.body.appendChild(actionBtn);
   }
 
